@@ -1,0 +1,173 @@
+{
+  "brand": {
+    "logo": "utility_logo.png",
+    "icon": "utility_icon.png"
+  },
+  "floors": [
+    {
+      "floor_id": 1,
+      "name": "8706-1707호",
+      "image_file": "room_8706_1707_map.png"
+    }
+  ],
+  "devices": [
+    {
+      "device_id": 1,
+      "floor_id": 1,
+      "type": "콘센트",
+      "name": "칠판 왼쪽 콘센트",
+      "x": 0.27,
+      "y": 0.13,
+      "status": "사용가능",
+      "color": "#1f9d55",
+      "avg": 5.0,
+      "count": 1,
+      "recent": [
+        {
+          "rating": 5,
+          "comment": "칠판 앞이라 발표 준비할 때 쓰기 좋아요",
+          "created_at": "2026-06-07 16:55"
+        }
+      ],
+      "photo": "room_front_wall.jpeg"
+    },
+    {
+      "device_id": 2,
+      "floor_id": 1,
+      "type": "콘센트",
+      "name": "칠판 오른쪽 콘센트",
+      "x": 0.75,
+      "y": 0.13,
+      "status": "사용가능",
+      "color": "#1f9d55",
+      "avg": 4.0,
+      "count": 1,
+      "recent": [
+        {
+          "rating": 4,
+          "comment": "교탁 쪽에서 접근하기 쉬움",
+          "created_at": "2026-06-07 16:56"
+        }
+      ],
+      "photo": "room_front_wall.jpeg"
+    },
+    {
+      "device_id": 3,
+      "floor_id": 1,
+      "type": "콘센트",
+      "name": "왼쪽 출입문 콘센트",
+      "x": 0.18,
+      "y": 0.92,
+      "status": "점유",
+      "color": "#ff9f1c",
+      "avg": 3.0,
+      "count": 1,
+      "recent": [
+        {
+          "rating": 3,
+          "comment": "문 근처라 사람이 자주 지나가요",
+          "created_at": "2026-06-07 16:57"
+        }
+      ],
+      "photo": "room_outlet_wall.jpeg"
+    },
+    {
+      "device_id": 4,
+      "floor_id": 1,
+      "type": "콘센트",
+      "name": "왼쪽 출입문 안쪽 콘센트",
+      "x": 0.27,
+      "y": 0.92,
+      "status": "사용가능",
+      "color": "#1f9d55",
+      "avg": 4.0,
+      "count": 1,
+      "recent": [
+        {
+          "rating": 4,
+          "comment": "창가 자리에서 쓰기 무난함",
+          "created_at": "2026-06-07 16:58"
+        }
+      ],
+      "photo": "room_outlet_wall.jpeg"
+    },
+    {
+      "device_id": 5,
+      "floor_id": 1,
+      "type": "콘센트",
+      "name": "오른쪽 출입문 왼편 콘센트",
+      "x": 0.76,
+      "y": 0.92,
+      "status": null,
+      "color": "#9aa0a6",
+      "avg": null,
+      "count": 0,
+      "recent": [],
+      "photo": "room_window_column.jpeg"
+    },
+    {
+      "device_id": 6,
+      "floor_id": 1,
+      "type": "콘센트",
+      "name": "오른쪽 출입문 오른편 콘센트",
+      "x": 0.86,
+      "y": 0.92,
+      "status": null,
+      "color": "#9aa0a6",
+      "avg": null,
+      "count": 0,
+      "recent": [],
+      "photo": "room_windows_overview.jpeg"
+    },
+    {
+      "device_id": 7,
+      "floor_id": 1,
+      "type": "에어컨",
+      "name": "중앙 벽면 에어컨",
+      "x": 0.53,
+      "y": 0.55,
+      "status": "사용가능",
+      "color": "#1f9d55",
+      "avg": 4.0,
+      "count": 1,
+      "recent": [
+        {
+          "rating": 4,
+          "comment": "강의실 중앙 냉방이 잘 됩니다",
+          "created_at": "2026-06-07 16:59"
+        }
+      ],
+      "photo": "room_front_wall.jpeg"
+    },
+    {
+      "device_id": 8,
+      "floor_id": 1,
+      "type": "에어컨",
+      "name": "창가 에어컨",
+      "x": 0.91,
+      "y": 0.55,
+      "status": "사용가능",
+      "color": "#1f9d55",
+      "avg": 3.0,
+      "count": 1,
+      "recent": [
+        {
+          "rating": 3,
+          "comment": "창가 쪽은 햇빛 때문에 조금 더워요",
+          "created_at": "2026-06-07 17:00"
+        }
+      ],
+      "photo": "room_windows_overview.jpeg"
+    }
+  ],
+  "statuses": [
+    "사용가능",
+    "고장",
+    "점유"
+  ],
+  "device_types": [
+    "콘센트",
+    "에어컨"
+  ],
+  "generated_at": "2026-06-07 17:03"
+}
