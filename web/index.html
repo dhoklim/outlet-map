@@ -319,6 +319,29 @@
     border: 1px solid var(--line);
   }
 
+  /* --- 모바일 전용 컴포넌트 (데스크톱에서는 숨김) --- */
+  .sheet-handle {
+    display: none;
+    width: 40px; height: 4px;
+    background: #ddd; border-radius: 2px;
+    margin: 0 auto 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .star-row {
+    display: none;
+    gap: 2px;
+    align-items: center;
+  }
+  .star-btn {
+    border: none; background: none;
+    font-size: 28px; color: #ddd;
+    padding: 2px 4px; cursor: pointer;
+    line-height: 1;
+    transition: color .1s;
+  }
+  .star-btn.on { color: var(--accent); }
+
   .modal-bg {
     position: fixed;
     inset: 0;
