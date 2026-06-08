@@ -513,6 +513,7 @@
 </div>
 
 <script>
+const isMobile = () => window.matchMedia('(max-width: 880px)').matches;
 const STATE_URL = window.OUTLET_MAP_STATE_URL || '/api/state';
 const IMAGE_PREFIX = window.OUTLET_MAP_IMAGE_PREFIX || '/data/images/';
 const READ_ONLY = Boolean(window.OUTLET_MAP_READ_ONLY);
@@ -651,6 +652,7 @@ function stars(avg) {
 }
 
 function renderPanel() {
+  const panel = document.querySelector('.panel');
   const sum = document.getElementById('summary');
   const form = document.getElementById('form');
   const d = curDevice();
@@ -660,6 +662,7 @@ function renderPanel() {
       <p class="meta">도면의 마커를 누르면 해당 위치 사진과 상태가 표시됩니다.</p>`;
     form.classList.add('disabled');
     renderPhotoStrip();
+    if (isMobile()) panel.classList.remove('collapsed', 'expanded');
     return;
   }
 
@@ -681,6 +684,10 @@ function renderPanel() {
   }
   sum.innerHTML = html;
   renderPhotoStrip(photo);
+  if (isMobile()) {
+    panel.classList.remove('expanded');
+    panel.classList.add('collapsed');
+  }
 }
 
 function renderPhotoStrip(activePhoto = '') {
@@ -776,6 +783,26 @@ async function submitDevice() {
   closeModal();
   await loadState();
 }
+
+// 바텀 시트 토글
+document.querySelector('.sheet-handle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (!isMobile()) return;
+  const panel = document.querySelector('.panel');
+  if (panel.classList.contains('collapsed')) {
+    panel.classList.replace('collapsed', 'expanded');
+  } else if (panel.classList.contains('expanded')) {
+    panel.classList.replace('expanded', 'collapsed');
+  }
+});
+
+document.querySelector('.panel').addEventListener('click', () => {
+  if (!isMobile()) return;
+  const panel = document.querySelector('.panel');
+  if (panel.classList.contains('collapsed')) {
+    panel.classList.replace('collapsed', 'expanded');
+  }
+});
 
 loadState();
 setInterval(loadState, 3000);
