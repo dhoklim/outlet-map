@@ -362,20 +362,73 @@
   .modal h3 { margin: 0 0 12px; }
 
   @media (max-width: 880px) {
-    header { align-items: flex-start; flex-direction: column; }
-    .search { margin-left: 0; width: 100%; }
-    .search input { flex: 1; min-width: 0; }
-    main {
-      grid-template-columns: 1fr;
-      height: auto;
-      min-height: calc(100vh - 65px);
+    /* ── 헤더 슬림화 ── */
+    header {
+      flex-wrap: nowrap;
+      height: 48px;
+      padding: 0 10px;
+      gap: 8px;
+      overflow: hidden;
     }
+    .brand img, .brand-subtitle { display: none; }
+    .brand { min-width: auto; gap: 0; }
+    .brand-title { font-size: 13px; }
+    #tabs { flex-wrap: nowrap; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+    .tab { padding: 5px 8px; font-size: 12px; white-space: nowrap; }
+    label.sync { font-size: 11px; white-space: nowrap; flex-shrink: 0; }
+    .search { gap: 4px; flex-shrink: 0; }
+    .search input { min-width: 80px; font-size: 13px; padding: 5px 8px; }
+    .search button { padding: 5px 8px; font-size: 12px; }
+    #syncInfo { display: none; }
+
+    /* ── 지도 전체화면 ── */
+    main { display: block; height: calc(100vh - 48px); padding: 0; }
+    .map-stage { display: flex; flex-direction: column; height: 100%; }
+    .room-heading { display: none; }
+    .map-shell { flex: 1; min-height: 0; display: block; }
     .map {
-      width: 100%;
+      width: 100%; height: 100%;
+      border-radius: 0;
+      border-left: none; border-right: none;
+      aspect-ratio: unset;
     }
+
+    /* ── 마커 터치 영역 확대 ── */
+    .dot { width: 28px; height: 28px; }
+    .marker.selected .dot { width: 34px; height: 34px; }
+
+    /* ── 바텀 시트 ── */
+    .sheet-handle { display: block; }
     .panel {
-      overflow: visible;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      width: auto;
+      max-height: 65vh;
+      border-radius: 16px 16px 0 0;
+      border: none;
+      box-shadow: 0 -4px 24px rgba(32,33,36,.18);
+      transform: translateY(100%);
+      transition: transform .28s ease, max-height .28s ease;
+      overflow-y: hidden;
+      z-index: 100;
+      padding: 8px 16px 24px;
     }
+    .panel.collapsed {
+      transform: translateY(0);
+      max-height: 148px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .panel.expanded {
+      transform: translateY(0);
+      max-height: 65vh;
+      overflow-y: auto;
+      cursor: default;
+    }
+
+    /* ── 별점 탭 ── */
+    #starRating { display: flex !important; }
+    #rating, #rating + .meta { display: none; }
   }
 </style>
 </head>
