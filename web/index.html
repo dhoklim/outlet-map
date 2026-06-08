@@ -514,6 +514,24 @@
 
 <script>
 const isMobile = () => window.matchMedia('(max-width: 880px)').matches;
+
+function updateStarDisplay(val) {
+  document.querySelectorAll('.star-btn').forEach(btn => {
+    btn.classList.toggle('on', parseInt(btn.dataset.val, 10) <= val);
+  });
+}
+
+function initStarRating() {
+  updateStarDisplay(5); // select 기본값 5에 맞춤
+  document.querySelectorAll('.star-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation(); // 바텀시트 collapse 방지
+      const val = parseInt(btn.dataset.val, 10);
+      document.getElementById('rating').value = val;
+      updateStarDisplay(val);
+    });
+  });
+}
 const STATE_URL = window.OUTLET_MAP_STATE_URL || '/api/state';
 const IMAGE_PREFIX = window.OUTLET_MAP_IMAGE_PREFIX || '/data/images/';
 const READ_ONLY = Boolean(window.OUTLET_MAP_READ_ONLY);
@@ -804,6 +822,7 @@ document.querySelector('.panel').addEventListener('click', () => {
   }
 });
 
+initStarRating();
 loadState();
 setInterval(loadState, 3000);
 </script>
