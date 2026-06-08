@@ -52,8 +52,21 @@ def test_image_content_type_matches_extension():
     assert web_server.image_content_type("unknown.bin") == "application/octet-stream"
 
 
+def test_mobile_html_structure():
+    html_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                             "web", "index.html")
+    html = open(html_path, encoding="utf-8").read()
+    assert 'class="sheet-handle"' in html, "시트 핸들 div 없음"
+    assert 'id="starRating"' in html, "별점 버튼 컨테이너 없음"
+    assert 'class="star-btn"' in html, "별점 버튼 없음"
+    assert 'data-val="5"' in html, "별점 5 버튼 없음"
+
+
 def _run():
     passed = 0
+    test_mobile_html_structure()
+    passed += 1
+    print("  ok  test_mobile_html_structure")
     test_image_content_type_matches_extension()
     passed += 1
     print("  ok  test_image_content_type_matches_extension")
