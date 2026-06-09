@@ -140,6 +140,42 @@ def test_compute_today_status_empty():
     assert result["next_free"] is None
 
 
+def test_load_classrooms_returns_seeded_data():
+    storage.ensure_data_files()
+    classrooms = storage.load_classrooms()
+    assert len(classrooms) == 3
+    names = [c.name for c in classrooms]
+    assert "614호" in names
+    assert "706호" in names
+    assert "707호" in names
+
+
+def test_load_today_schedules_filters_by_day():
+    storage.ensure_data_files()
+    classrooms = storage.load_classrooms()
+    cls_614 = next(c for c in classrooms if c.name == "614호")
+    # 화요일(1): 614호에 2개 수업
+    tue = storage.load_today_schedules(cls_614.classroom_id, 1)
+    assert len(tue) >= 2
+    assert all(s.day_of_week == 1 for s in tue)
+    # 월요일(0): 614호에 수업 없음
+    mon = storage.load_today_schedules(cls_614.classroom_id, 0)
+    assert len(mon) == 0
+
+
+def test_add_and_delete_schedule():
+    storage.ensure_data_files()
+    c = storage.add_classroom("테스트강의실", "1층", "Test Room")
+    assert c.classroom_id > 0
+    s = storage.add_schedule(c.classroom_id, 2, "09:00", "10:30", "테스트과목", "테스트교수")
+    assert s.schedule_id > 0
+    rows = storage.load_today_schedules(c.classroom_id, 2)
+    assert any(r.schedule_id == s.schedule_id for r in rows)
+    storage.delete_schedule(s.schedule_id)
+    rows_after = storage.load_today_schedules(c.classroom_id, 2)
+    assert not any(r.schedule_id == s.schedule_id for r in rows_after)
+
+
 def _run():
     passed = 0
     for fn in (test_summarize_average_and_latest, test_summarize_empty, test_validators):
