@@ -909,6 +909,14 @@ document.querySelector('.panel').addEventListener('click', () => {
   }
 });
 
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 let classroomList = [];
 let scheduleClassroomId = null;
 
@@ -929,12 +937,17 @@ async function switchMainTab(tab) {
 }
 
 async function loadClassrooms() {
-  const r = await fetch('/api/classrooms');
-  classroomList = await r.json();
-  if (classroomList.length) {
-    scheduleClassroomId = classroomList[0].classroom_id;
-    renderClassroomChips();
-    await loadTodaySchedule(scheduleClassroomId);
+  try {
+    const r = await fetch('/api/classrooms');
+    classroomList = await r.json();
+    if (classroomList.length) {
+      scheduleClassroomId = classroomList[0].classroom_id;
+      renderClassroomChips();
+      await loadTodaySchedule(scheduleClassroomId);
+    }
+  } catch (e) {
+    document.getElementById('schedule-list').innerHTML =
+      '<p class="no-schedule">강의실 정보를 불러올 수 없습니다.</p>';
   }
 }
 
@@ -942,7 +955,7 @@ function renderClassroomChips() {
   const el = document.getElementById('classroom-chips');
   el.innerHTML = classroomList.map(c =>
     `<button class="classroom-chip${c.classroom_id === scheduleClassroomId ? ' active' : ''}"
-      onclick="selectClassroom(${c.classroom_id})">${c.name}</button>`
+      onclick="selectClassroom(${c.classroom_id})">${escHtml(c.name)}</button>`
   ).join('');
 }
 
@@ -953,35 +966,40 @@ async function selectClassroom(id) {
 }
 
 async function loadTodaySchedule(classroomId) {
-  const r = await fetch(`/api/classrooms/${classroomId}/today`);
-  const data = await r.json();
-  const isClass = data.status === '수업 중';
-  document.getElementById('status-dot').style.background =
-    isClass ? 'var(--red)' : 'var(--green)';
-  document.getElementById('status-text').textContent = data.status;
-  const statusBar = document.getElementById('schedule-status-bar');
-  let nextSpan = statusBar.querySelector('.status-next');
-  if (!nextSpan) {
-    nextSpan = document.createElement('span');
-    nextSpan.className = 'status-next';
-    statusBar.appendChild(nextSpan);
+  try {
+    const r = await fetch(`/api/classrooms/${classroomId}/today`);
+    const data = await r.json();
+    const isClass = data.status === '수업 중';
+    document.getElementById('status-dot').style.background =
+      isClass ? 'var(--red)' : 'var(--green)';
+    document.getElementById('status-text').textContent = data.status;
+    const statusBar = document.getElementById('schedule-status-bar');
+    let nextSpan = statusBar.querySelector('.status-next');
+    if (!nextSpan) {
+      nextSpan = document.createElement('span');
+      nextSpan.className = 'status-next';
+      statusBar.appendChild(nextSpan);
+    }
+    nextSpan.textContent =
+      isClass && data.next_free ? `· 다음 빈 시간: ${data.next_free}` : '';
+    const listEl = document.getElementById('schedule-list');
+    if (!data.schedules.length) {
+      listEl.innerHTML = '<p class="no-schedule">오늘 수업 없음</p>';
+      return;
+    }
+    listEl.innerHTML = data.schedules.map(s =>
+      `<div class="schedule-row${s.is_now ? ' now' : ''}">
+        <div class="sched-time">${escHtml(s.start_time)} – ${escHtml(s.end_time)}</div>
+        <div>
+          <div class="sched-course">${escHtml(s.course_name)}${s.is_now ? '<span class="now-badge">지금</span>' : ''}</div>
+          <div class="sched-prof">${escHtml(s.professor)}</div>
+        </div>
+      </div>`
+    ).join('');
+  } catch (e) {
+    document.getElementById('schedule-list').innerHTML =
+      '<p class="no-schedule">시간표를 불러올 수 없습니다.</p>';
   }
-  nextSpan.textContent =
-    isClass && data.next_free ? `· 다음 빈 시간: ${data.next_free}` : '';
-  const listEl = document.getElementById('schedule-list');
-  if (!data.schedules.length) {
-    listEl.innerHTML = '<p class="no-schedule">오늘 수업 없음</p>';
-    return;
-  }
-  listEl.innerHTML = data.schedules.map(s =>
-    `<div class="schedule-row${s.is_now ? ' now' : ''}">
-      <div class="sched-time">${s.start_time} – ${s.end_time}</div>
-      <div>
-        <div class="sched-course">${s.course_name}${s.is_now ? '<span class="now-badge">지금</span>' : ''}</div>
-        <div class="sched-prof">${s.professor}</div>
-      </div>
-    </div>`
-  ).join('');
 }
 
 initStarRating();
