@@ -125,8 +125,14 @@ class Handler(BaseHTTPRequestHandler):
                 for c in classrooms
             ])
         elif self.path.startswith("/api/classrooms/") and self.path.endswith("/today"):
-            parts = self.path.split("/")  # ['', 'api', 'classrooms', '{id}', 'today']
-            classroom_id = int(parts[3])
+            try:
+                parts = self.path.split("/")  # ['', 'api', 'classrooms', '{id}', 'today']
+                if len(parts) < 5:
+                    raise ValueError("invalid path")
+                classroom_id = int(parts[3])
+            except (ValueError, IndexError):
+                self._send_json({"error": "invalid classroom id"}, 400)
+                return
             day_of_week = datetime.now().weekday()  # 0=월 … 4=금
             schedules = storage.load_today_schedules(classroom_id, day_of_week)
             now_hhmm = datetime.now().strftime("%H:%M")
