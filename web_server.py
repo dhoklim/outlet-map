@@ -8,12 +8,14 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import datetime
 from urllib.parse import unquote
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 import storage
 from models import (
     STATUS_COLORS, summarize, validate_rating, validate_status, DEVICE_TYPES,
+    compute_today_status,
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -115,6 +117,41 @@ class Handler(BaseHTTPRequestHandler):
                             "text/html; charset=utf-8")
         elif self.path == "/api/state":
             self._send_json(build_state())
+        elif self.path == "/api/classrooms":
+            classrooms = storage.load_classrooms()
+            self._send_json([
+                {"classroom_id": c.classroom_id, "name": c.name,
+                 "floor": c.floor, "room_label": c.room_label}
+                for c in classrooms
+            ])
+        elif self.path.startswith("/api/classrooms/") and self.path.endswith("/today"):
+            parts = self.path.split("/")  # ['', 'api', 'classrooms', '{id}', 'today']
+            classroom_id = int(parts[3])
+            day_of_week = datetime.now().weekday()  # 0=월 … 4=금
+            schedules = storage.load_today_schedules(classroom_id, day_of_week)
+            now_hhmm = datetime.now().strftime("%H:%M")
+            status_info = compute_today_status(schedules, now_hhmm)
+            classrooms = storage.load_classrooms()
+            classroom = next((c for c in classrooms if c.classroom_id == classroom_id), None)
+            self._send_json({
+                "classroom_id": classroom_id,
+                "name": classroom.name if classroom else "",
+                "status": status_info["status"],
+                "current_course": status_info["current_course"],
+                "current_professor": status_info["current_professor"],
+                "next_free": status_info["next_free"],
+                "schedules": [
+                    {
+                        "schedule_id": s.schedule_id,
+                        "start_time": s.start_time,
+                        "end_time": s.end_time,
+                        "course_name": s.course_name,
+                        "professor": s.professor,
+                        "is_now": s.start_time <= now_hhmm < s.end_time,
+                    }
+                    for s in schedules
+                ],
+            })
         elif self.path.startswith("/data/images/"):
             # 학교 도면, 로고, 위치 참고 사진 제공
             name = os.path.basename(unquote(self.path))
@@ -148,10 +185,41 @@ class Handler(BaseHTTPRequestHandler):
                 x, y = float(data["x"]), float(data["y"])
                 dev = storage.add_device(floor_id, dtype, name, x, y)
                 self._send_json({"ok": True, "device_id": dev.device_id})
+            elif self.path == "/api/classrooms":
+                name = str(data["name"]).strip()
+                if not name:
+                    raise ValueError("강의실 이름을 입력하세요.")
+                floor = str(data.get("floor", "")).strip()
+                room_label = str(data.get("room_label", "")).strip()
+                c = storage.add_classroom(name, floor, room_label)
+                self._send_json({"ok": True, "classroom_id": c.classroom_id})
+            elif self.path.startswith("/api/classrooms/") and self.path.endswith("/schedules"):
+                parts = self.path.split("/")
+                classroom_id = int(parts[3])
+                day_of_week = int(data["day_of_week"])
+                start_time = str(data["start_time"]).strip()
+                end_time = str(data["end_time"]).strip()
+                course_name = str(data["course_name"]).strip()
+                professor = str(data.get("professor", "")).strip()
+                s = storage.add_schedule(
+                    classroom_id, day_of_week, start_time, end_time, course_name, professor
+                )
+                self._send_json({"ok": True, "schedule_id": s.schedule_id})
             else:
                 self._send_json({"error": "not found"}, 404)
         except (KeyError, ValueError) as e:
             self._send_json({"ok": False, "error": str(e)}, 400)
+
+    def do_DELETE(self):
+        try:
+            if self.path.startswith("/api/schedules/"):
+                schedule_id = int(self.path.split("/")[-1])
+                storage.delete_schedule(schedule_id)
+                self._send_json({"ok": True})
+            else:
+                self._send_json({"error": "not found"}, 404)
+        except (ValueError, IndexError):
+            self._send_json({"ok": False, "error": "잘못된 요청"}, 400)
 
     def log_message(self, *args):  # 콘솔 로그 최소화
         pass
