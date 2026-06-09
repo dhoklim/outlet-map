@@ -59,6 +59,55 @@ class DeviceSummary:
         return STATUS_COLORS.get(self.latest_status, STATUS_COLORS[None])
 
 
+@dataclass
+class Classroom:
+    classroom_id: int
+    name: str
+    floor: str
+    room_label: str
+
+
+@dataclass
+class Schedule:
+    schedule_id: int
+    classroom_id: int
+    day_of_week: int   # 0=월 1=화 2=수 3=목 4=금
+    start_time: str    # "HH:MM"
+    end_time: str      # "HH:MM"
+    course_name: str
+    professor: str
+
+
+def compute_today_status(schedules: list, now_hhmm: str) -> dict:
+    """오늘 시간표 목록과 현재 시각(HH:MM)으로 강의실 상태를 계산한다."""
+    sorted_s = sorted(schedules, key=lambda s: s.start_time)
+    current = next(
+        (s for s in sorted_s if s.start_time <= now_hhmm < s.end_time),
+        None,
+    )
+    if current:
+        # 연속 수업 블록의 마지막 종료 시각 계산
+        end = current.end_time
+        while True:
+            chained = next((s for s in sorted_s if s.start_time == end), None)
+            if chained:
+                end = chained.end_time
+            else:
+                break
+        return {
+            "status": "수업 중",
+            "current_course": current.course_name,
+            "current_professor": current.professor,
+            "next_free": end,
+        }
+    return {
+        "status": "빈 강의실",
+        "current_course": None,
+        "current_professor": None,
+        "next_free": None,
+    }
+
+
 def summarize(device: Device, evaluations: list) -> DeviceSummary:
     """device에 해당하는 평가들만 모아 상태/평균별점/최근평가를 계산한다."""
     mine = [e for e in evaluations if e.device_id == device.device_id]

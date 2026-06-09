@@ -95,6 +95,51 @@ def test_storage_roundtrip():
     assert s.count == 1 and s.avg_rating == 4.0
 
 
+def test_compute_today_status_during_class():
+    from models import Schedule, compute_today_status
+    schedules = [
+        Schedule(1, 1, 1, "09:00", "10:30", "고급프로그래밍", "홍길동"),
+        Schedule(2, 1, 1, "11:00", "12:30", "알고리즘",     "이순신"),
+    ]
+    result = compute_today_status(schedules, "09:45")
+    assert result["status"] == "수업 중"
+    assert result["current_course"] == "고급프로그래밍"
+    assert result["current_professor"] == "홍길동"
+    assert result["next_free"] == "10:30"
+
+
+def test_compute_today_status_free():
+    from models import Schedule, compute_today_status
+    schedules = [
+        Schedule(1, 1, 1, "09:00", "10:30", "고급프로그래밍", "홍길동"),
+        Schedule(2, 1, 1, "11:00", "12:30", "알고리즘",     "이순신"),
+    ]
+    result = compute_today_status(schedules, "10:45")
+    assert result["status"] == "빈 강의실"
+    assert result["current_course"] is None
+    assert result["next_free"] is None
+
+
+def test_compute_today_status_chained_classes():
+    from models import Schedule, compute_today_status
+    # 10:30 종료 즉시 10:30 시작 → 연속 블록
+    schedules = [
+        Schedule(1, 1, 1, "09:00", "10:30", "과목A", "교수A"),
+        Schedule(2, 1, 1, "10:30", "12:00", "과목B", "교수B"),
+    ]
+    result = compute_today_status(schedules, "09:30")
+    assert result["status"] == "수업 중"
+    assert result["next_free"] == "12:00"  # 연속 블록 전체 끝 시간
+
+
+def test_compute_today_status_empty():
+    from models import compute_today_status
+    result = compute_today_status([], "10:00")
+    assert result["status"] == "빈 강의실"
+    assert result["current_course"] is None
+    assert result["next_free"] is None
+
+
 def _run():
     passed = 0
     for fn in (test_summarize_average_and_latest, test_summarize_empty, test_validators):
