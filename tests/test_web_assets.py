@@ -73,5 +73,16 @@ def _run():
     print(f"\n{passed}개 테스트 통과 (DB 필요 테스트는 DATABASE_URL 설정 후 pytest로 실행)")
 
 
+def test_schedule_tab_html_structure():
+    html_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                             "web", "index.html")
+    html = open(html_path, encoding="utf-8").read()
+    assert 'id="schedule-panel"' in html,   "시간표 패널 없음"
+    assert 'id="classroom-chips"' in html,  "강의실 칩 컨테이너 없음"
+    assert 'id="schedule-tab-btn"' in html, "시간표 탭 버튼 없음"
+    assert 'switchMainTab' in html,         "탭 전환 함수 없음"
+    assert 'loadClassrooms' in html,        "강의실 로드 함수 없음"
+
+
 if __name__ == "__main__":
     _run()

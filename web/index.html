@@ -361,6 +361,82 @@
   }
   .modal h3 { margin: 0 0 12px; }
 
+  /* ── 시간표 탭 ── */
+  #schedule-panel {
+    padding: 18px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .classroom-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    overflow-x: auto;
+  }
+  .classroom-chip {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .classroom-chip.active {
+    background: var(--accent-dark);
+    color: var(--accent);
+    border-color: var(--accent-dark);
+  }
+  .schedule-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--panel);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--line);
+  }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .status-text { font-weight: 700; font-size: 14px; }
+  .status-next { color: var(--muted); font-size: 13px; }
+  .schedule-list { display: flex; flex-direction: column; gap: 8px; }
+  .schedule-row {
+    background: var(--panel);
+    border-radius: 10px;
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .schedule-row.now { border-color: var(--green); background: #f0faf4; }
+  .sched-time {
+    color: var(--muted);
+    font-size: 12px;
+    white-space: nowrap;
+    min-width: 110px;
+    margin-top: 2px;
+  }
+  .sched-course {
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .sched-prof { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .now-badge {
+    background: var(--green);
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+  .no-schedule { color: var(--muted); text-align: center; padding: 40px 0; }
+
   @media (max-width: 880px) {
     /* ── 헤더 슬림화 ── */
     header {
@@ -442,6 +518,7 @@
     </div>
   </div>
   <div id="tabs"></div>
+  <button id="schedule-tab-btn" class="tab" onclick="switchMainTab('schedule')">시간표</button>
   <label class="sync"><input type="checkbox" id="edit"> 편집 모드</label>
   <div class="search">
     <input type="text" id="search" placeholder="예: 칠판, 창가, 에어컨">
@@ -499,6 +576,15 @@
     <div class="photo-strip" id="photoStrip"></div>
   </aside>
 </main>
+
+<div id="schedule-panel" style="display:none;">
+  <div class="classroom-chips" id="classroom-chips"></div>
+  <div class="schedule-status-bar" id="schedule-status-bar">
+    <span class="status-dot" id="status-dot" style="background:var(--gray)"></span>
+    <span class="status-text" id="status-text">강의실을 선택하세요</span>
+  </div>
+  <div class="schedule-list" id="schedule-list"></div>
+</div>
 
 <div class="modal-bg" id="modalBg">
   <div class="modal">
@@ -598,6 +684,7 @@ function renderTabs() {
     b.className = 'tab' + (f.floor_id === floorId ? ' active' : '');
     b.textContent = f.name;
     b.onclick = () => {
+      switchMainTab('map');
       floorId = f.floor_id;
       selId = devicesHere()[0]?.device_id || null;
       renderTabs();
@@ -821,6 +908,81 @@ document.querySelector('.panel').addEventListener('click', () => {
     panel.classList.replace('collapsed', 'expanded');
   }
 });
+
+let classroomList = [];
+let scheduleClassroomId = null;
+
+async function switchMainTab(tab) {
+  const mainEl = document.querySelector('main');
+  const schedPanel = document.getElementById('schedule-panel');
+  const schedBtn = document.getElementById('schedule-tab-btn');
+  if (tab === 'schedule') {
+    mainEl.style.display = 'none';
+    schedPanel.style.display = 'block';
+    schedBtn.classList.add('active');
+    if (classroomList.length === 0) await loadClassrooms();
+  } else {
+    mainEl.style.display = '';
+    schedPanel.style.display = 'none';
+    schedBtn.classList.remove('active');
+  }
+}
+
+async function loadClassrooms() {
+  const r = await fetch('/api/classrooms');
+  classroomList = await r.json();
+  if (classroomList.length) {
+    scheduleClassroomId = classroomList[0].classroom_id;
+    renderClassroomChips();
+    await loadTodaySchedule(scheduleClassroomId);
+  }
+}
+
+function renderClassroomChips() {
+  const el = document.getElementById('classroom-chips');
+  el.innerHTML = classroomList.map(c =>
+    `<button class="classroom-chip${c.classroom_id === scheduleClassroomId ? ' active' : ''}"
+      onclick="selectClassroom(${c.classroom_id})">${c.name}</button>`
+  ).join('');
+}
+
+async function selectClassroom(id) {
+  scheduleClassroomId = id;
+  renderClassroomChips();
+  await loadTodaySchedule(id);
+}
+
+async function loadTodaySchedule(classroomId) {
+  const r = await fetch(`/api/classrooms/${classroomId}/today`);
+  const data = await r.json();
+  const isClass = data.status === '수업 중';
+  document.getElementById('status-dot').style.background =
+    isClass ? 'var(--red)' : 'var(--green)';
+  document.getElementById('status-text').textContent = data.status;
+  const statusBar = document.getElementById('schedule-status-bar');
+  let nextSpan = statusBar.querySelector('.status-next');
+  if (!nextSpan) {
+    nextSpan = document.createElement('span');
+    nextSpan.className = 'status-next';
+    statusBar.appendChild(nextSpan);
+  }
+  nextSpan.textContent =
+    isClass && data.next_free ? `· 다음 빈 시간: ${data.next_free}` : '';
+  const listEl = document.getElementById('schedule-list');
+  if (!data.schedules.length) {
+    listEl.innerHTML = '<p class="no-schedule">오늘 수업 없음</p>';
+    return;
+  }
+  listEl.innerHTML = data.schedules.map(s =>
+    `<div class="schedule-row${s.is_now ? ' now' : ''}">
+      <div class="sched-time">${s.start_time} – ${s.end_time}</div>
+      <div>
+        <div class="sched-course">${s.course_name}${s.is_now ? '<span class="now-badge">지금</span>' : ''}</div>
+        <div class="sched-prof">${s.professor}</div>
+      </div>
+    </div>`
+  ).join('');
+}
 
 initStarRating();
 loadState();
