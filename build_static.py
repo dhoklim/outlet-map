@@ -22,12 +22,52 @@ STATIC_PATCH_HEAD = """\
 <script>
 window.OUTLET_MAP_STATE_URL = 'state.json';
 window.OUTLET_MAP_IMAGE_PREFIX = 'images/';
-window.OUTLET_MAP_READ_ONLY = true;
 """
 
 STATIC_PATCH_TAIL = """\
 const __origFetch = window.fetch.bind(window);
+const __LS_KEY = 'outlet_map_evals';
+const __STATUS_COLORS = {"사용가능":"#1f9d55","고장":"#e02424","점유":"#ff9f1c"};
+
+function _applyLocalEvals(state) {
+  const evals = JSON.parse(localStorage.getItem(__LS_KEY) || '[]');
+  if (!evals.length) return;
+  (state.devices || []).forEach(d => {
+    const mine = evals.filter(e => e.device_id === d.device_id);
+    if (!mine.length) return;
+    const ordered = [...mine].sort((a, b) => b.eval_id - a.eval_id);
+    d.status = ordered[0].status;
+    d.color = __STATUS_COLORS[d.status] || '#9aa0a6';
+    d.avg = Math.round(mine.reduce((s, e) => s + e.rating, 0) / mine.length * 10) / 10;
+    d.count = mine.length;
+    d.recent = ordered.slice(0, 5).map(e => ({rating: e.rating, comment: e.comment, created_at: e.created_at}));
+  });
+}
+
 window.fetch = function(url, opts) {
+  // 평가 등록 → localStorage 저장
+  if (url === '/api/evaluation' && opts && opts.method === 'POST') {
+    const data = JSON.parse(opts.body);
+    const evals = JSON.parse(localStorage.getItem(__LS_KEY) || '[]');
+    const ev = {
+      eval_id: Date.now(),
+      device_id: parseInt(data.device_id),
+      status: data.status,
+      rating: parseInt(data.rating),
+      comment: data.comment || '',
+      created_at: new Date().toISOString().slice(0, 16).replace('T', ' ')
+    };
+    evals.push(ev);
+    localStorage.setItem(__LS_KEY, JSON.stringify(evals));
+    return Promise.resolve({ok: true, json: () => Promise.resolve({ok: true, eval_id: ev.eval_id})});
+  }
+  // state.json 로드 후 로컬 평가 합산
+  if (url === 'state.json') {
+    return __origFetch(url, opts).then(r => r.json()).then(state => {
+      _applyLocalEvals(state);
+      return {ok: true, json: () => Promise.resolve(state)};
+    });
+  }
   if (url === '/api/classrooms') {
     return Promise.resolve({ok:true, json:()=>Promise.resolve(window.__SC__)});
   }
@@ -132,6 +172,14 @@ def main():
         STATIC_PATCH_TAIL
     )
     html = html.replace("\n<script>\nconst isMobile", "\n" + inject + "<script>\nconst isMobile", 1)
+
+    # syncInfo 텍스트: 로컬 저장 안내로 교체
+    html = html.replace(
+        '>3초마다 동기화<',
+        '>평가는 이 기기에만 저장됩니다<'
+    )
+    # 3초 자동 갱신 제거 (state.json은 정적이므로 불필요)
+    html = html.replace('setInterval(loadState, 3000);', '')
 
     with open(os.path.join(OUT_DIR, "index.html"), "w", encoding="utf-8") as f:
         f.write(html)
