@@ -221,14 +221,6 @@
     padding: 14px;
     box-shadow: 0 10px 30px rgba(32, 33, 36, .08);
   }
-  .hero-photo {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    border-radius: 7px;
-    border: 1px solid var(--line);
-    background: #f0f0ec;
-  }
   .panel h2 {
     margin: 12px 0 2px;
     font-size: 20px;
@@ -287,19 +279,6 @@
     color: var(--accent-dark);
     background: var(--accent);
     font-weight: 800;
-  }
-  .photo-strip {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 7px;
-    margin-top: 14px;
-  }
-  .photo-strip img {
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: cover;
-    border-radius: 6px;
-    border: 1px solid var(--line);
   }
 
   /* --- 모바일 전용 컴포넌트 (데스크톱에서는 숨김) --- */
@@ -561,7 +540,6 @@
       <input type="text" id="comment" style="width:100%;">
       <button class="submit" onclick="submitEval()">평가 등록</button>
     </div>
-    <div class="photo-strip" id="photoStrip"></div>
   </aside>
 </main>
 
@@ -810,21 +788,17 @@ function renderPanel() {
   const form = document.getElementById('form');
   const d = curDevice();
   if (!d) {
-    sum.innerHTML = `<img class="hero-photo" src="${imageUrl('classroom_map.jpeg')}" alt="강의실 전원 지도">
-      <h2>위치를 선택하세요</h2>
-      <p class="meta">도면의 마커를 누르면 해당 위치 사진과 상태가 표시됩니다.</p>`;
+    sum.innerHTML = `<h2>위치를 선택하세요</h2>
+      <p class="meta">도면의 마커를 누르면 해당 위치 상태가 표시됩니다.</p>`;
     form.classList.add('disabled');
-    renderPhotoStrip();
     if (isMobile()) panel.classList.remove('collapsed', 'expanded');
     return;
   }
 
   form.classList.remove('disabled');
-  const photo = d.photo || 'classroom_map.jpeg';
   const status = d.status || '미평가';
   const statusColor = d.color;
-  let html = `<img class="hero-photo" src="${imageUrl(photo)}" alt="${d.name} 참고 사진">
-    <h2>${d.name}</h2>
+  let html = `<h2>${d.name}</h2>
     <div class="meta">${d.type} · 도면 좌표 ${Math.round(d.x * 100)}%, ${Math.round(d.y * 100)}%</div>
     <div class="status" style="color:${statusColor}">● ${status}</div>
     <div class="stars">${stars(d.avg)}</div>
@@ -836,26 +810,12 @@ function renderPanel() {
     html += '</div>';
   }
   sum.innerHTML = html;
-  renderPhotoStrip(photo);
   if (isMobile()) {
     panel.classList.remove('expanded');
     panel.classList.add('collapsed');
   }
 }
 
-function renderPhotoStrip(activePhoto = '') {
-  const el = document.getElementById('photoStrip');
-  const names = [
-    'classroom_map.jpeg',
-    'room_front_wall.jpeg',
-    'room_windows_overview.jpeg',
-    'room_outlet_wall.jpeg',
-    'room_window_column.jpeg',
-  ];
-  el.innerHTML = names.map(name =>
-    `<img src="${imageUrl(name)}" alt="강의실 참고 사진" style="${name === activePhoto ? 'outline:3px solid var(--accent);' : ''}">`
-  ).join('');
-}
 
 async function submitEval() {
   if (READ_ONLY) return;
