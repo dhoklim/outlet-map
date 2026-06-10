@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Utility — 8706 전원 지도</title>
+<title>Utility — 전원 지도</title>
 <style>
   :root {
     --ink: #202124;
@@ -165,7 +165,7 @@
   .map {
     position: relative;
     width: min(100%, calc((100vh - 150px) * 1.432));
-    aspect-ratio: 2388 / 1668;
+    aspect-ratio: 2798 / 2056;
     background: var(--paper) center / 100% 100% no-repeat;
     border: 1px solid rgba(32, 33, 36, .18);
     border-radius: 8px;
@@ -319,6 +319,29 @@
     border: 1px solid var(--line);
   }
 
+  /* --- 모바일 전용 컴포넌트 (데스크톱에서는 숨김) --- */
+  .sheet-handle {
+    display: none;
+    width: 40px; height: 4px;
+    background: #ddd; border-radius: 2px;
+    margin: 0 auto 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .star-row {
+    display: none;
+    gap: 2px;
+    align-items: center;
+  }
+  .star-btn {
+    border: none; background: none;
+    font-size: 28px; color: #ddd;
+    padding: 2px 4px; cursor: pointer;
+    line-height: 1;
+    transition: color .1s;
+  }
+  .star-btn.on { color: var(--accent); }
+
   .modal-bg {
     position: fixed;
     inset: 0;
@@ -338,21 +361,170 @@
   }
   .modal h3 { margin: 0 0 12px; }
 
+  /* ── 시간표 탭 ── */
+  #schedule-panel {
+    padding: 18px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .classroom-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    overflow-x: auto;
+  }
+  .classroom-chip {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .classroom-chip.active {
+    background: var(--accent-dark);
+    color: var(--accent);
+    border-color: var(--accent-dark);
+  }
+  .schedule-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--panel);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--line);
+  }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .status-text { font-weight: 700; font-size: 14px; }
+  .status-next { color: var(--muted); font-size: 13px; }
+  .schedule-list { display: flex; flex-direction: column; gap: 8px; }
+  .schedule-row {
+    background: var(--panel);
+    border-radius: 10px;
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .schedule-row.now { border-color: var(--green); background: #f0faf4; }
+  .sched-time {
+    color: var(--muted);
+    font-size: 12px;
+    white-space: nowrap;
+    min-width: 110px;
+    margin-top: 2px;
+  }
+  .sched-course {
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .sched-prof { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .now-badge {
+    background: var(--green);
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+  .no-schedule { color: var(--muted); text-align: center; padding: 40px 0; }
+  @media (max-width: 640px) {
+    .sched-columns { flex-direction: column; gap: 16px; }
+  }
+  .day-section { margin-bottom: 12px; }
+  .day-header {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    padding: 6px 4px 4px;
+    text-transform: uppercase;
+  }
+  .day-header.today {
+    color: var(--accent-dark);
+    background: var(--accent);
+    padding: 4px 8px;
+    border-radius: 6px;
+    margin: 0 -4px;
+  }
+  .day-empty { color: var(--muted); font-size: 13px; padding: 8px 4px; }
+
   @media (max-width: 880px) {
-    header { align-items: flex-start; flex-direction: column; }
-    .search { margin-left: 0; width: 100%; }
-    .search input { flex: 1; min-width: 0; }
-    main {
-      grid-template-columns: 1fr;
-      height: auto;
-      min-height: calc(100vh - 65px);
+    /* ── 헤더 슬림화 ── */
+    header {
+      flex-wrap: nowrap;
+      height: 48px;
+      padding: 0 10px;
+      gap: 8px;
+      overflow: hidden;
     }
+    .brand img, .brand-subtitle { display: none; }
+    .brand { min-width: auto; gap: 0; }
+    .brand-title { font-size: 13px; }
+    #tabs { flex-wrap: nowrap; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+    .tab { padding: 5px 8px; font-size: 12px; white-space: nowrap; }
+    label.sync { font-size: 11px; white-space: nowrap; flex-shrink: 0; }
+    .search { gap: 4px; flex-shrink: 0; }
+    .search input { min-width: 80px; font-size: 13px; padding: 5px 8px; }
+    .search button { padding: 5px 8px; font-size: 12px; }
+    #syncInfo { display: none; }
+
+    /* ── 지도 전체화면 ── */
+    main { display: block; height: calc(100vh - 48px); padding: 0; }
+    .map-stage { display: flex; flex-direction: column; height: 100%; }
+    .room-heading { display: none; }
+    .map-shell { flex: 1; min-height: 0; display: block; }
     .map {
-      width: 100%;
+      width: 100%; height: 100%;
+      border-radius: 0;
+      border-left: none; border-right: none;
+      aspect-ratio: unset;
     }
+
+    /* ── 마커 터치 영역 확대 ── */
+    .dot { width: 28px; height: 28px; }
+    .marker.selected .dot { width: 34px; height: 34px; }
+
+    /* ── 바텀 시트 ── */
+    .sheet-handle { display: block; }
     .panel {
-      overflow: visible;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      width: auto;
+      max-height: 65vh;
+      border-radius: 16px 16px 0 0;
+      border: none;
+      box-shadow: 0 -4px 24px rgba(32,33,36,.18);
+      transform: translateY(100%);
+      transition: transform .28s ease, max-height .28s ease;
+      overflow-y: hidden;
+      z-index: 100;
+      padding: 8px 16px 24px;
     }
+    .panel.collapsed {
+      transform: translateY(0);
+      max-height: 148px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .panel.expanded {
+      transform: translateY(0);
+      max-height: 65vh;
+      overflow-y: auto;
+      cursor: default;
+    }
+
+    /* ── 별점 탭 ── */
+    #starRating { display: flex !important; }
+    #rating, #rating + .meta { display: none; }
   }
 </style>
 </head>
@@ -366,19 +538,20 @@
     </div>
   </div>
   <div id="tabs"></div>
+  <button id="schedule-tab-btn" class="tab" onclick="switchMainTab('schedule')">시간표</button>
   <label class="sync"><input type="checkbox" id="edit"> 편집 모드</label>
   <div class="search">
     <input type="text" id="search" placeholder="예: 칠판, 창가, 에어컨">
     <button onclick="doSearch()">찾기</button>
   </div>
-  <span class="sync" id="syncInfo">CSV와 3초마다 동기화</span>
+  <span class="sync" id="syncInfo">3초마다 동기화</span>
 </header>
 
 <main>
   <section class="map-stage">
     <div class="room-heading">
       <div>
-        <h1 id="roomTitle">8706-1707호 전원 지도</h1>
+        <h1 id="roomTitle">전원 지도</h1>
         <p>사진으로 확인한 콘센트와 에어컨 위치를 도면 위에 표시했습니다.</p>
       </div>
       <div class="legend">
@@ -394,6 +567,7 @@
   </section>
 
   <aside class="panel">
+    <div class="sheet-handle"></div>
     <div id="summary"></div>
     <hr>
     <div id="form" class="form disabled">
@@ -408,6 +582,13 @@
         </select>
         <span class="meta">1~5</span>
       </div>
+      <div id="starRating" class="star-row">
+        <button type="button" class="star-btn" data-val="1">★</button>
+        <button type="button" class="star-btn" data-val="2">★</button>
+        <button type="button" class="star-btn" data-val="3">★</button>
+        <button type="button" class="star-btn" data-val="4">★</button>
+        <button type="button" class="star-btn" data-val="5">★</button>
+      </div>
       <label>한줄평</label>
       <input type="text" id="comment" style="width:100%;">
       <button class="submit" onclick="submitEval()">평가 등록</button>
@@ -415,6 +596,15 @@
     <div class="photo-strip" id="photoStrip"></div>
   </aside>
 </main>
+
+<div id="schedule-panel" style="display:none;">
+  <div class="classroom-chips" id="classroom-chips"></div>
+  <div class="schedule-status-bar" id="schedule-status-bar">
+    <span class="status-dot" id="status-dot" style="background:var(--gray)"></span>
+    <span class="status-text" id="status-text">강의실을 선택하세요</span>
+  </div>
+  <div class="schedule-list" id="schedule-list"></div>
+</div>
 
 <div class="modal-bg" id="modalBg">
   <div class="modal">
@@ -432,8 +622,66 @@
 window.OUTLET_MAP_STATE_URL = 'state.json';
 window.OUTLET_MAP_IMAGE_PREFIX = 'images/';
 window.OUTLET_MAP_READ_ONLY = true;
+window.__SC__ = [{"classroom_id": 1, "name": "614호", "floor": "6층", "room_label": "Lecture Room 02"}, {"classroom_id": 2, "name": "706호", "floor": "7층", "room_label": "Lecture Room 03"}, {"classroom_id": 3, "name": "707호", "floor": "7층", "room_label": "Lecture Room 04"}];
+window.__SS__ = [{"schedule_id": 1, "classroom_id": 1, "day_of_week": 1, "start_time": "10:30", "end_time": "12:30", "course_name": "모바일 컴퓨팅", "professor": "김윤지"}, {"schedule_id": 2, "classroom_id": 1, "day_of_week": 1, "start_time": "14:30", "end_time": "16:30", "course_name": "모바일 컴퓨팅", "professor": "김윤지"}, {"schedule_id": 3, "classroom_id": 1, "day_of_week": 2, "start_time": "10:30", "end_time": "12:00", "course_name": "캡스톤 디자인 프로젝트 II", "professor": "정재필"}, {"schedule_id": 4, "classroom_id": 1, "day_of_week": 2, "start_time": "15:30", "end_time": "17:30", "course_name": "메타버스와 디지털변환", "professor": "서상현"}, {"schedule_id": 5, "classroom_id": 1, "day_of_week": 3, "start_time": "10:30", "end_time": "12:30", "course_name": "고급 인터랙티브 미디어디자인", "professor": "김윤지"}, {"schedule_id": 6, "classroom_id": 1, "day_of_week": 4, "start_time": "13:00", "end_time": "14:30", "course_name": "지능형영상비전", "professor": "김영빈"}, {"schedule_id": 7, "classroom_id": 1, "day_of_week": 4, "start_time": "17:30", "end_time": "18:30", "course_name": "CAU세미나(1)", "professor": "서상현"}, {"schedule_id": 8, "classroom_id": 1, "day_of_week": 4, "start_time": "18:30", "end_time": "19:30", "course_name": "CAU세미나(1)", "professor": "임상순"}, {"schedule_id": 9, "classroom_id": 2, "day_of_week": 0, "start_time": "11:30", "end_time": "13:30", "course_name": "영상처리 및 비전", "professor": "최종원"}, {"schedule_id": 10, "classroom_id": 2, "day_of_week": 0, "start_time": "14:30", "end_time": "16:30", "course_name": "영상처리 및 비전", "professor": "김학구"}, {"schedule_id": 11, "classroom_id": 2, "day_of_week": 1, "start_time": "10:30", "end_time": "12:00", "course_name": "기초 프로그래밍", "professor": "서상현"}, {"schedule_id": 13, "classroom_id": 2, "day_of_week": 1, "start_time": "14:30", "end_time": "16:00", "course_name": "기초 프로그래밍", "professor": "서상현"}, {"schedule_id": 15, "classroom_id": 2, "day_of_week": 2, "start_time": "10:30", "end_time": "12:00", "course_name": "라이팅 테크놀로지", "professor": "이설의"}, {"schedule_id": 16, "classroom_id": 2, "day_of_week": 2, "start_time": "13:00", "end_time": "14:30", "course_name": "라이팅 테크놀로지", "professor": "이설의"}, {"schedule_id": 17, "classroom_id": 2, "day_of_week": 2, "start_time": "15:30", "end_time": "17:30", "course_name": "라이팅 테크놀로지", "professor": "이설의"}, {"schedule_id": 12, "classroom_id": 2, "day_of_week": 3, "start_time": "10:30", "end_time": "12:00", "course_name": "기초 프로그래밍", "professor": "서상현"}, {"schedule_id": 14, "classroom_id": 2, "day_of_week": 3, "start_time": "14:30", "end_time": "16:00", "course_name": "기초 프로그래밍", "professor": "서상현"}, {"schedule_id": 18, "classroom_id": 2, "day_of_week": 4, "start_time": "18:30", "end_time": "19:30", "course_name": "CAU세미나(1)", "professor": "이대론"}, {"schedule_id": 19, "classroom_id": 3, "day_of_week": 0, "start_time": "11:30", "end_time": "13:30", "course_name": "게임엔진 2", "professor": "김정호"}, {"schedule_id": 20, "classroom_id": 3, "day_of_week": 0, "start_time": "14:30", "end_time": "16:30", "course_name": "게임엔진 2", "professor": "김정호"}, {"schedule_id": 21, "classroom_id": 3, "day_of_week": 1, "start_time": "09:30", "end_time": "10:30", "course_name": "기초 프로그래밍", "professor": "임상순"}, {"schedule_id": 23, "classroom_id": 3, "day_of_week": 1, "start_time": "09:30", "end_time": "10:30", "course_name": "표준웹테크놀로지", "professor": "김관희"}, {"schedule_id": 25, "classroom_id": 3, "day_of_week": 1, "start_time": "11:30", "end_time": "13:00", "course_name": "표준웹테크놀로지", "professor": "김관희"}, {"schedule_id": 27, "classroom_id": 3, "day_of_week": 1, "start_time": "13:00", "end_time": "16:30", "course_name": "기초 프로그래밍", "professor": "임상순"}, {"schedule_id": 29, "classroom_id": 3, "day_of_week": 2, "start_time": "09:30", "end_time": "11:30", "course_name": "콘텐츠 빅데이터 처리", "professor": "임상순"}, {"schedule_id": 30, "classroom_id": 3, "day_of_week": 2, "start_time": "13:00", "end_time": "15:00", "course_name": "시각효과 프로덕션", "professor": "유태경"}, {"schedule_id": 31, "classroom_id": 3, "day_of_week": 2, "start_time": "15:30", "end_time": "17:30", "course_name": "시각효과 프로덕션", "professor": "유태경"}, {"schedule_id": 22, "classroom_id": 3, "day_of_week": 3, "start_time": "09:30", "end_time": "10:30", "course_name": "기초 프로그래밍", "professor": "임상순"}, {"schedule_id": 24, "classroom_id": 3, "day_of_week": 3, "start_time": "09:30", "end_time": "10:30", "course_name": "표준웹테크놀로지", "professor": "김관희"}, {"schedule_id": 26, "classroom_id": 3, "day_of_week": 3, "start_time": "11:30", "end_time": "13:00", "course_name": "표준웹테크놀로지", "professor": "김관희"}, {"schedule_id": 28, "classroom_id": 3, "day_of_week": 3, "start_time": "13:00", "end_time": "16:30", "course_name": "기초 프로그래밍", "professor": "임상순"}, {"schedule_id": 32, "classroom_id": 3, "day_of_week": 4, "start_time": "10:30", "end_time": "12:30", "course_name": "크리에이티브 테크놀로지", "professor": "정재필"}, {"schedule_id": 33, "classroom_id": 3, "day_of_week": 4, "start_time": "14:30", "end_time": "16:30", "course_name": "크리에이티브 테크놀로지", "professor": "정재필"}, {"schedule_id": 34, "classroom_id": 3, "day_of_week": 4, "start_time": "17:30", "end_time": "18:30", "course_name": "CAU세미나(1)", "professor": "김관지"}, {"schedule_id": 35, "classroom_id": 3, "day_of_week": 4, "start_time": "18:30", "end_time": "19:30", "course_name": "CAU세미나(1)", "professor": "신태일"}];
+const __origFetch = window.fetch.bind(window);
+window.fetch = function(url, opts) {
+  if (url === '/api/classrooms') {
+    return Promise.resolve({ok:true, json:()=>Promise.resolve(window.__SC__)});
+  }
+  const m = String(url).match(/^\/api\/classrooms\/(\d+)\/week$/);
+  if (m) {
+    return Promise.resolve({ok:true, json:()=>Promise.resolve(_computeWeek(parseInt(m[1])))});
+  }
+  return __origFetch(url, opts);
+};
+
+function _computeWeek(cid) {
+  const now = new Date();
+  const jsd = now.getDay();
+  const today = jsd === 0 ? 6 : jsd - 1;
+  const hhmm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  const cls = (window.__SC__ || []).find(c => c.classroom_id === cid);
+  const all = (window.__SS__ || []).filter(s => s.classroom_id === cid);
+  const todayS = all.filter(s => s.day_of_week === today);
+  let status = '빈 강의실', cc = '', cp = '', nf = '';
+  for (const s of todayS) {
+    if (s.start_time <= hhmm && hhmm < s.end_time) { status='수업 중'; cc=s.course_name; cp=s.professor; }
+  }
+  if (status === '수업 중') {
+    const sorted = [...todayS].sort((a,b)=>a.start_time.localeCompare(b.start_time));
+    for (const s of sorted) { if (s.start_time <= hhmm && hhmm < s.end_time) nf = s.end_time; }
+  }
+  const week = [0,1,2,3,4].map(day => ({
+    day, day_name: ['월','화','수','목','금'][day], is_today: day===today,
+    schedules: all.filter(s=>s.day_of_week===day)
+      .sort((a,b)=>a.start_time.localeCompare(b.start_time))
+      .map(s=>({...s, is_now: day===today && s.start_time<=hhmm && hhmm<s.end_time}))
+  }));
+  return {classroom_id:cid, name:cls?cls.name:'', status, current_course:cc,
+          current_professor:cp, next_free:nf, today, week};
+}
 </script>
 <script>
+const isMobile = () => window.matchMedia('(max-width: 880px)').matches;
+
+function updateStarDisplay(val) {
+  document.querySelectorAll('.star-btn').forEach(btn => {
+    btn.classList.toggle('on', parseInt(btn.dataset.val, 10) <= val);
+  });
+}
+
+function initStarRating() {
+  updateStarDisplay(5); // select 기본값 5에 맞춤
+  document.querySelectorAll('.star-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation(); // 바텀시트 collapse 방지
+      const val = parseInt(btn.dataset.val, 10);
+      document.getElementById('rating').value = val;
+      updateStarDisplay(val);
+    });
+  });
+}
 const STATE_URL = window.OUTLET_MAP_STATE_URL || '/api/state';
 const IMAGE_PREFIX = window.OUTLET_MAP_IMAGE_PREFIX || '/data/images/';
 const READ_ONLY = Boolean(window.OUTLET_MAP_READ_ONLY);
@@ -471,12 +719,12 @@ function curDevice() {
 
 function markerLabel(name) {
   return name
-    .replace('칠판 왼쪽 콘센트', '칠판 왼쪽')
-    .replace('칠판 오른쪽 콘센트', '칠판 오른쪽')
-    .replace('왼쪽 출입문 콘센트', '좌문')
-    .replace('왼쪽 출입문 안쪽 콘센트', '좌안')
-    .replace('오른쪽 출입문 왼편 콘센트', '우좌')
-    .replace('오른쪽 출입문 오른편 콘센트', '우우');
+    .replace('앞 왼쪽 분전함', '앞 왼쪽')
+    .replace('앞 오른쪽 분전함', '앞 오른쪽')
+    .replace('뒷벽 왼쪽 콘센트 1', '뒤 왼①')
+    .replace('뒷벽 왼쪽 콘센트 2', '뒤 왼②')
+    .replace('뒷벽 오른쪽 콘센트 1', '뒤 오른①')
+    .replace('뒷벽 오른쪽 콘센트 2', '뒤 오른②');
 }
 
 function renderBrand() {
@@ -500,6 +748,7 @@ function renderTabs() {
     b.className = 'tab' + (f.floor_id === floorId ? ' active' : '');
     b.textContent = f.name;
     b.onclick = () => {
+      switchMainTab('map');
       floorId = f.floor_id;
       selId = devicesHere()[0]?.device_id || null;
       renderTabs();
@@ -572,20 +821,22 @@ function stars(avg) {
 }
 
 function renderPanel() {
+  const panel = document.querySelector('.panel');
   const sum = document.getElementById('summary');
   const form = document.getElementById('form');
   const d = curDevice();
   if (!d) {
-    sum.innerHTML = `<img class="hero-photo" src="${imageUrl('room_8706_door.jpeg')}" alt="8706 강의실 표지">
+    sum.innerHTML = `<img class="hero-photo" src="${imageUrl('classroom_map.jpeg')}" alt="강의실 전원 지도">
       <h2>위치를 선택하세요</h2>
       <p class="meta">도면의 마커를 누르면 해당 위치 사진과 상태가 표시됩니다.</p>`;
     form.classList.add('disabled');
     renderPhotoStrip();
+    if (isMobile()) panel.classList.remove('collapsed', 'expanded');
     return;
   }
 
   form.classList.remove('disabled');
-  const photo = d.photo || 'room_8706_door.jpeg';
+  const photo = d.photo || 'classroom_map.jpeg';
   const status = d.status || '미평가';
   const statusColor = d.color;
   let html = `<img class="hero-photo" src="${imageUrl(photo)}" alt="${d.name} 참고 사진">
@@ -602,17 +853,20 @@ function renderPanel() {
   }
   sum.innerHTML = html;
   renderPhotoStrip(photo);
+  if (isMobile()) {
+    panel.classList.remove('expanded');
+    panel.classList.add('collapsed');
+  }
 }
 
 function renderPhotoStrip(activePhoto = '') {
   const el = document.getElementById('photoStrip');
   const names = [
-    'room_8706_door.jpeg',
+    'classroom_map.jpeg',
     'room_front_wall.jpeg',
     'room_windows_overview.jpeg',
     'room_outlet_wall.jpeg',
     'room_window_column.jpeg',
-    'utility_icon.png',
   ];
   el.innerHTML = names.map(name =>
     `<img src="${imageUrl(name)}" alt="강의실 참고 사진" style="${name === activePhoto ? 'outline:3px solid var(--accent);' : ''}">`
@@ -698,6 +952,125 @@ async function submitDevice() {
   await loadState();
 }
 
+// 바텀 시트 토글
+document.querySelector('.sheet-handle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (!isMobile()) return;
+  const panel = document.querySelector('.panel');
+  if (panel.classList.contains('collapsed')) {
+    panel.classList.replace('collapsed', 'expanded');
+  } else if (panel.classList.contains('expanded')) {
+    panel.classList.replace('expanded', 'collapsed');
+  }
+});
+
+document.querySelector('.panel').addEventListener('click', () => {
+  if (!isMobile()) return;
+  const panel = document.querySelector('.panel');
+  if (panel.classList.contains('collapsed')) {
+    panel.classList.replace('collapsed', 'expanded');
+  }
+});
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+let classroomList = [];
+let scheduleClassroomId = null;
+
+async function switchMainTab(tab) {
+  const mainEl = document.querySelector('main');
+  const schedPanel = document.getElementById('schedule-panel');
+  const schedBtn = document.getElementById('schedule-tab-btn');
+  if (tab === 'schedule') {
+    mainEl.style.display = 'none';
+    schedPanel.style.display = 'block';
+    schedBtn.classList.add('active');
+    if (classroomList.length === 0) await loadClassrooms();
+  } else {
+    mainEl.style.display = '';
+    schedPanel.style.display = 'none';
+    schedBtn.classList.remove('active');
+  }
+}
+
+async function loadClassrooms() {
+  try {
+    const r = await fetch('/api/classrooms');
+    classroomList = await r.json();
+    if (classroomList.length) {
+      scheduleClassroomId = classroomList[0].classroom_id;
+      renderClassroomChips();
+      await loadWeekSchedule(scheduleClassroomId);
+    }
+  } catch (e) {
+    document.getElementById('schedule-list').innerHTML =
+      '<p class="no-schedule">강의실 정보를 불러올 수 없습니다.</p>';
+  }
+}
+
+function renderClassroomChips() {
+  const el = document.getElementById('classroom-chips');
+  el.innerHTML = classroomList.map(c =>
+    `<button class="classroom-chip${c.classroom_id === scheduleClassroomId ? ' active' : ''}"
+      onclick="selectClassroom(${c.classroom_id})">${escHtml(c.name)}</button>`
+  ).join('');
+}
+
+async function selectClassroom(id) {
+  scheduleClassroomId = id;
+  renderClassroomChips();
+  await loadWeekSchedule(id);
+}
+
+async function loadWeekSchedule(classroomId) {
+  try {
+    const r = await fetch(`/api/classrooms/${classroomId}/week`);
+    const data = await r.json();
+    const isClass = data.status === '수업 중';
+    document.getElementById('status-dot').style.background =
+      isClass ? 'var(--red)' : 'var(--green)';
+    document.getElementById('status-text').textContent = data.status;
+    const statusBar = document.getElementById('schedule-status-bar');
+    let nextSpan = statusBar.querySelector('.status-next');
+    if (!nextSpan) {
+      nextSpan = document.createElement('span');
+      nextSpan.className = 'status-next';
+      statusBar.appendChild(nextSpan);
+    }
+    nextSpan.textContent =
+      isClass && data.next_free ? `· 다음 빈 시간: ${data.next_free}` : '';
+    const listEl = document.getElementById('schedule-list');
+    listEl.innerHTML = data.week.map(day => {
+      const dayLabel = `${escHtml(day.day_name)}요일${day.is_today ? ' (오늘)' : ''}`;
+      const rows = day.schedules.length
+        ? day.schedules.map(s =>
+            `<div class="schedule-row${s.is_now ? ' now' : ''}">
+              <div class="sched-time">${escHtml(s.start_time)} – ${escHtml(s.end_time)}</div>
+              <div>
+                <div class="sched-course">${escHtml(s.course_name)}${s.is_now ? '<span class="now-badge">지금</span>' : ''}</div>
+                <div class="sched-prof">${escHtml(s.professor)}</div>
+              </div>
+            </div>`
+          ).join('')
+        : '<div class="day-empty">수업 없음</div>';
+      return `<div class="day-section">
+        <div class="day-header${day.is_today ? ' today' : ''}">${dayLabel}</div>
+        ${rows}
+      </div>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('schedule-list').innerHTML =
+      '<p class="no-schedule">시간표를 불러올 수 없습니다.</p>';
+  }
+}
+
+initStarRating();
 loadState();
 setInterval(loadState, 3000);
 </script>
