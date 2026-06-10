@@ -29,9 +29,9 @@ BRAND = {
 DEVICE_PHOTOS = {
     "앞 왼쪽 분전함":       "room_front_wall.jpeg",
     "앞 오른쪽 분전함":      "room_front_wall.jpeg",
-    "멀티탭 왼쪽":          "room_outlet_wall.jpeg",
-    "멀티탭 중앙":          "room_outlet_wall.jpeg",
-    "멀티탭 오른쪽":        "room_outlet_wall.jpeg",
+    "에어컨 왼쪽":          "",
+    "에어컨 중앙":          "",
+    "에어컨 오른쪽":        "",
     "뒷벽 왼쪽 콘센트 1":   "room_outlet_wall.jpeg",
     "뒷벽 왼쪽 콘센트 2":   "room_outlet_wall.jpeg",
     "뒷벽 오른쪽 콘센트 1": "room_outlet_wall.jpeg",
