@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Utility — 8706 전원 지도</title>
+<title>Utility — 전원 지도</title>
 <style>
   :root {
     --ink: #202124;
@@ -165,7 +165,7 @@
   .map {
     position: relative;
     width: min(100%, calc((100vh - 150px) * 1.432));
-    aspect-ratio: 2388 / 1668;
+    aspect-ratio: 2798 / 2056;
     background: var(--paper) center / 100% 100% no-repeat;
     border: 1px solid rgba(32, 33, 36, .18);
     border-radius: 8px;
@@ -436,6 +436,26 @@
     font-weight: 700;
   }
   .no-schedule { color: var(--muted); text-align: center; padding: 40px 0; }
+  @media (max-width: 640px) {
+    .sched-columns { flex-direction: column; gap: 16px; }
+  }
+  .day-section { margin-bottom: 12px; }
+  .day-header {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    padding: 6px 4px 4px;
+    text-transform: uppercase;
+  }
+  .day-header.today {
+    color: var(--accent-dark);
+    background: var(--accent);
+    padding: 4px 8px;
+    border-radius: 6px;
+    margin: 0 -4px;
+  }
+  .day-empty { color: var(--muted); font-size: 13px; padding: 8px 4px; }
 
   @media (max-width: 880px) {
     /* ── 헤더 슬림화 ── */
@@ -524,14 +544,14 @@
     <input type="text" id="search" placeholder="예: 칠판, 창가, 에어컨">
     <button onclick="doSearch()">찾기</button>
   </div>
-  <span class="sync" id="syncInfo">CSV와 3초마다 동기화</span>
+  <span class="sync" id="syncInfo">3초마다 동기화</span>
 </header>
 
 <main>
   <section class="map-stage">
     <div class="room-heading">
       <div>
-        <h1 id="roomTitle">8706-1707호 전원 지도</h1>
+        <h1 id="roomTitle">전원 지도</h1>
         <p>사진으로 확인한 콘센트와 에어컨 위치를 도면 위에 표시했습니다.</p>
       </div>
       <div class="legend">
@@ -655,12 +675,12 @@ function curDevice() {
 
 function markerLabel(name) {
   return name
-    .replace('칠판 왼쪽 콘센트', '칠판 왼쪽')
-    .replace('칠판 오른쪽 콘센트', '칠판 오른쪽')
-    .replace('왼쪽 출입문 콘센트', '좌문')
-    .replace('왼쪽 출입문 안쪽 콘센트', '좌안')
-    .replace('오른쪽 출입문 왼편 콘센트', '우좌')
-    .replace('오른쪽 출입문 오른편 콘센트', '우우');
+    .replace('앞 왼쪽 분전함', '앞 왼쪽')
+    .replace('앞 오른쪽 분전함', '앞 오른쪽')
+    .replace('뒷벽 왼쪽 콘센트 1', '뒤 왼①')
+    .replace('뒷벽 왼쪽 콘센트 2', '뒤 왼②')
+    .replace('뒷벽 오른쪽 콘센트 1', '뒤 오른①')
+    .replace('뒷벽 오른쪽 콘센트 2', '뒤 오른②');
 }
 
 function renderBrand() {
@@ -762,7 +782,7 @@ function renderPanel() {
   const form = document.getElementById('form');
   const d = curDevice();
   if (!d) {
-    sum.innerHTML = `<img class="hero-photo" src="${imageUrl('room_8706_door.jpeg')}" alt="8706 강의실 표지">
+    sum.innerHTML = `<img class="hero-photo" src="${imageUrl('classroom_map.jpeg')}" alt="강의실 전원 지도">
       <h2>위치를 선택하세요</h2>
       <p class="meta">도면의 마커를 누르면 해당 위치 사진과 상태가 표시됩니다.</p>`;
     form.classList.add('disabled');
@@ -772,7 +792,7 @@ function renderPanel() {
   }
 
   form.classList.remove('disabled');
-  const photo = d.photo || 'room_8706_door.jpeg';
+  const photo = d.photo || 'classroom_map.jpeg';
   const status = d.status || '미평가';
   const statusColor = d.color;
   let html = `<img class="hero-photo" src="${imageUrl(photo)}" alt="${d.name} 참고 사진">
@@ -798,12 +818,11 @@ function renderPanel() {
 function renderPhotoStrip(activePhoto = '') {
   const el = document.getElementById('photoStrip');
   const names = [
-    'room_8706_door.jpeg',
+    'classroom_map.jpeg',
     'room_front_wall.jpeg',
     'room_windows_overview.jpeg',
     'room_outlet_wall.jpeg',
     'room_window_column.jpeg',
-    'utility_icon.png',
   ];
   el.innerHTML = names.map(name =>
     `<img src="${imageUrl(name)}" alt="강의실 참고 사진" style="${name === activePhoto ? 'outline:3px solid var(--accent);' : ''}">`
@@ -943,7 +962,7 @@ async function loadClassrooms() {
     if (classroomList.length) {
       scheduleClassroomId = classroomList[0].classroom_id;
       renderClassroomChips();
-      await loadTodaySchedule(scheduleClassroomId);
+      await loadWeekSchedule(scheduleClassroomId);
     }
   } catch (e) {
     document.getElementById('schedule-list').innerHTML =
@@ -962,12 +981,12 @@ function renderClassroomChips() {
 async function selectClassroom(id) {
   scheduleClassroomId = id;
   renderClassroomChips();
-  await loadTodaySchedule(id);
+  await loadWeekSchedule(id);
 }
 
-async function loadTodaySchedule(classroomId) {
+async function loadWeekSchedule(classroomId) {
   try {
-    const r = await fetch(`/api/classrooms/${classroomId}/today`);
+    const r = await fetch(`/api/classrooms/${classroomId}/week`);
     const data = await r.json();
     const isClass = data.status === '수업 중';
     document.getElementById('status-dot').style.background =
@@ -983,19 +1002,24 @@ async function loadTodaySchedule(classroomId) {
     nextSpan.textContent =
       isClass && data.next_free ? `· 다음 빈 시간: ${data.next_free}` : '';
     const listEl = document.getElementById('schedule-list');
-    if (!data.schedules.length) {
-      listEl.innerHTML = '<p class="no-schedule">오늘 수업 없음</p>';
-      return;
-    }
-    listEl.innerHTML = data.schedules.map(s =>
-      `<div class="schedule-row${s.is_now ? ' now' : ''}">
-        <div class="sched-time">${escHtml(s.start_time)} – ${escHtml(s.end_time)}</div>
-        <div>
-          <div class="sched-course">${escHtml(s.course_name)}${s.is_now ? '<span class="now-badge">지금</span>' : ''}</div>
-          <div class="sched-prof">${escHtml(s.professor)}</div>
-        </div>
-      </div>`
-    ).join('');
+    listEl.innerHTML = data.week.map(day => {
+      const dayLabel = `${escHtml(day.day_name)}요일${day.is_today ? ' (오늘)' : ''}`;
+      const rows = day.schedules.length
+        ? day.schedules.map(s =>
+            `<div class="schedule-row${s.is_now ? ' now' : ''}">
+              <div class="sched-time">${escHtml(s.start_time)} – ${escHtml(s.end_time)}</div>
+              <div>
+                <div class="sched-course">${escHtml(s.course_name)}${s.is_now ? '<span class="now-badge">지금</span>' : ''}</div>
+                <div class="sched-prof">${escHtml(s.professor)}</div>
+              </div>
+            </div>`
+          ).join('')
+        : '<div class="day-empty">수업 없음</div>';
+      return `<div class="day-section">
+        <div class="day-header${day.is_today ? ' today' : ''}">${dayLabel}</div>
+        ${rows}
+      </div>`;
+    }).join('');
   } catch (e) {
     document.getElementById('schedule-list').innerHTML =
       '<p class="no-schedule">시간표를 불러올 수 없습니다.</p>';

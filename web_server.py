@@ -27,14 +27,15 @@ BRAND = {
 }
 
 DEVICE_PHOTOS = {
-    "칠판 왼쪽 콘센트": "room_front_wall.jpeg",
-    "칠판 오른쪽 콘센트": "room_front_wall.jpeg",
-    "왼쪽 출입문 콘센트": "room_outlet_wall.jpeg",
-    "왼쪽 출입문 안쪽 콘센트": "room_outlet_wall.jpeg",
-    "오른쪽 출입문 왼편 콘센트": "room_window_column.jpeg",
-    "오른쪽 출입문 오른편 콘센트": "room_windows_overview.jpeg",
-    "중앙 벽면 에어컨": "room_front_wall.jpeg",
-    "창가 에어컨": "room_windows_overview.jpeg",
+    "앞 왼쪽 분전함":       "room_front_wall.jpeg",
+    "앞 오른쪽 분전함":      "room_front_wall.jpeg",
+    "멀티탭 왼쪽":          "room_outlet_wall.jpeg",
+    "멀티탭 중앙":          "room_outlet_wall.jpeg",
+    "멀티탭 오른쪽":        "room_outlet_wall.jpeg",
+    "뒷벽 왼쪽 콘센트 1":   "room_outlet_wall.jpeg",
+    "뒷벽 왼쪽 콘센트 2":   "room_outlet_wall.jpeg",
+    "뒷벽 오른쪽 콘센트 1": "room_outlet_wall.jpeg",
+    "뒷벽 오른쪽 콘센트 2": "room_outlet_wall.jpeg",
 }
 
 
@@ -124,6 +125,53 @@ class Handler(BaseHTTPRequestHandler):
                  "floor": c.floor, "room_label": c.room_label}
                 for c in classrooms
             ])
+        elif self.path.startswith("/api/classrooms/") and self.path.endswith("/week"):
+            try:
+                parts = self.path.split("/")
+                if len(parts) < 5:
+                    raise ValueError("invalid path")
+                classroom_id = int(parts[3])
+            except (ValueError, IndexError):
+                self._send_json({"error": "invalid classroom id"}, 400)
+                return
+            day_names = ["월", "화", "수", "목", "금"]
+            now = datetime.now()
+            today = now.weekday()
+            now_hhmm = now.strftime("%H:%M")
+            all_schedules = storage.load_week_schedules(classroom_id)
+            today_schedules = [s for s in all_schedules if s.day_of_week == today]
+            status_info = compute_today_status(today_schedules, now_hhmm)
+            classrooms = storage.load_classrooms()
+            classroom = next((c for c in classrooms if c.classroom_id == classroom_id), None)
+            week = []
+            for day in range(5):
+                day_scheds = [s for s in all_schedules if s.day_of_week == day]
+                week.append({
+                    "day": day,
+                    "day_name": day_names[day],
+                    "is_today": day == today,
+                    "schedules": [
+                        {
+                            "schedule_id": s.schedule_id,
+                            "start_time": s.start_time,
+                            "end_time": s.end_time,
+                            "course_name": s.course_name,
+                            "professor": s.professor,
+                            "is_now": day == today and s.start_time <= now_hhmm < s.end_time,
+                        }
+                        for s in day_scheds
+                    ],
+                })
+            self._send_json({
+                "classroom_id": classroom_id,
+                "name": classroom.name if classroom else "",
+                "status": status_info["status"],
+                "current_course": status_info["current_course"],
+                "current_professor": status_info["current_professor"],
+                "next_free": status_info["next_free"],
+                "today": today,
+                "week": week,
+            })
         elif self.path.startswith("/api/classrooms/") and self.path.endswith("/today"):
             try:
                 parts = self.path.split("/")  # ['', 'api', 'classrooms', '{id}', 'today']

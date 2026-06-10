@@ -67,37 +67,29 @@ def ensure_data_files() -> None:
 
 
 def _seed(conn: sqlite3.Connection) -> None:
-    conn.execute(
-        "INSERT INTO floors (name, image_file) VALUES (?, ?)",
-        ("8706-1707호", "room_8706_1707_map.png"),
-    )
-    sample_devices = [
-        (1, "콘센트", "칠판 왼쪽 콘센트",           0.27, 0.13),
-        (1, "콘센트", "칠판 오른쪽 콘센트",          0.75, 0.13),
-        (1, "콘센트", "왼쪽 출입문 콘센트",          0.18, 0.92),
-        (1, "콘센트", "왼쪽 출입문 안쪽 콘센트",     0.27, 0.92),
-        (1, "콘센트", "오른쪽 출입문 왼편 콘센트",   0.76, 0.92),
-        (1, "콘센트", "오른쪽 출입문 오른편 콘센트", 0.86, 0.92),
-        (1, "에어컨", "중앙 벽면 에어컨",            0.53, 0.55),
-        (1, "에어컨", "창가 에어컨",                 0.91, 0.55),
+    floors = [("614호", "classroom_map.jpeg"),
+              ("706호", "classroom_map.jpeg"),
+              ("707호", "classroom_map.jpeg")]
+    for name, img in floors:
+        conn.execute("INSERT INTO floors (name, image_file) VALUES (?, ?)", (name, img))
+
+    outlet_positions = [
+        ("콘센트", "앞 왼쪽 분전함",        0.272, 0.095),
+        ("콘센트", "앞 오른쪽 분전함",       0.720, 0.095),
+        ("멀티탭", "멀티탭 왼쪽",            0.192, 0.520),
+        ("멀티탭", "멀티탭 중앙",            0.500, 0.520),
+        ("멀티탭", "멀티탭 오른쪽",          0.805, 0.520),
+        ("콘센트", "뒷벽 왼쪽 콘센트 1",    0.150, 0.965),
+        ("콘센트", "뒷벽 왼쪽 콘센트 2",    0.255, 0.965),
+        ("콘센트", "뒷벽 오른쪽 콘센트 1",  0.728, 0.965),
+        ("콘센트", "뒷벽 오른쪽 콘센트 2",  0.828, 0.965),
     ]
-    conn.executemany(
-        "INSERT INTO devices (floor_id, type, name, x, y) VALUES (?, ?, ?, ?, ?)",
-        sample_devices,
-    )
-    sample_evals = [
-        (1, "사용가능", 5, "칠판 앞이라 발표 준비할 때 쓰기 좋아요"),
-        (2, "사용가능", 4, "교탁 쪽에서 접근하기 쉬움"),
-        (3, "점유",    3, "문 근처라 사람이 자주 지나가요"),
-        (4, "사용가능", 4, "창가 자리에서 쓰기 무난함"),
-        (7, "사용가능", 4, "강의실 중앙 냉방이 잘 됩니다"),
-        (8, "사용가능", 3, "창가 쪽은 햇빛 때문에 조금 더워요"),
-    ]
-    conn.executemany(
-        "INSERT INTO evaluations (device_id, status, rating, comment, created_at)"
-        " VALUES (?, ?, ?, ?, ?)",
-        [(d, s, r, c, "2026-06-01 12:00") for d, s, r, c in sample_evals],
-    )
+    for floor_id in range(1, 4):
+        for dtype, dname, x, y in outlet_positions:
+            conn.execute(
+                "INSERT INTO devices (floor_id, type, name, x, y) VALUES (?, ?, ?, ?, ?)",
+                (floor_id, dtype, dname, x, y),
+            )
 
 
 def _seed_classrooms(conn: sqlite3.Connection) -> None:
@@ -175,6 +167,21 @@ def load_today_schedules(classroom_id: int, day_of_week: int) -> list:
             " course_name, professor FROM schedules"
             " WHERE classroom_id = ? AND day_of_week = ? ORDER BY start_time",
             (classroom_id, day_of_week),
+        ).fetchall()
+        return [
+            Schedule(r["schedule_id"], r["classroom_id"], r["day_of_week"],
+                     r["start_time"], r["end_time"], r["course_name"], r["professor"])
+            for r in rows
+        ]
+
+
+def load_week_schedules(classroom_id: int) -> list:
+    with _get_conn() as conn:
+        rows = conn.execute(
+            "SELECT schedule_id, classroom_id, day_of_week, start_time, end_time,"
+            " course_name, professor FROM schedules"
+            " WHERE classroom_id = ? ORDER BY day_of_week, start_time",
+            (classroom_id,),
         ).fetchall()
         return [
             Schedule(r["schedule_id"], r["classroom_id"], r["day_of_week"],
