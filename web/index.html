@@ -221,6 +221,14 @@
     padding: 14px;
     box-shadow: 0 10px 30px rgba(32, 33, 36, .08);
   }
+  .hero-photo {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: #f0f0ec;
+  }
   .panel h2 {
     margin: 12px 0 2px;
     font-size: 20px;
@@ -714,7 +722,9 @@ function renderPanel() {
   form.classList.remove('disabled');
   const status = d.status || '미평가';
   const statusColor = d.color;
-  let html = `<h2>${d.name}</h2>
+  const photo = d.photo;
+  let html = (photo ? `<img class="hero-photo" src="${imageUrl(photo)}" alt="${d.name} 참고 사진">` : '')
+    + `<h2>${d.name}</h2>
     <div class="meta">${d.type} · 도면 좌표 ${Math.round(d.x * 100)}%, ${Math.round(d.y * 100)}%</div>
     <div class="status" style="color:${statusColor}">● ${status}</div>
     <div class="stars">${stars(d.avg)}</div>
