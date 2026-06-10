@@ -173,11 +173,6 @@ def main():
     )
     html = html.replace("\n<script>\nconst isMobile", "\n" + inject + "<script>\nconst isMobile", 1)
 
-    # syncInfo 텍스트: 로컬 저장 안내로 교체
-    html = html.replace(
-        '>3초마다 동기화<',
-        '>평가는 이 기기에만 저장됩니다<'
-    )
     # 3초 자동 갱신 제거 (state.json은 정적이므로 불필요)
     html = html.replace('setInterval(loadState, 3000);', '')
 
