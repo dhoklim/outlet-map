@@ -1,7 +1,7 @@
-"""정적(보기 전용) 사이트용 데이터 생성: SQLite → web_static/
+"""정적(보기 전용) 사이트용 데이터 생성: SQLite → docs/
 
 Cloudflare Pages / GitHub Pages 배포용:
-    python3 build_static.py && git add web_static/ && git push
+    python3 build_static.py && git add docs/ && git push
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from web_server import BRAND, DEVICE_PHOTOS, STATUS_COLORS
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMAGES_DIR = os.path.join(BASE_DIR, "data", "images")
-OUT_DIR = os.path.join(BASE_DIR, "web_static")
+OUT_DIR = os.path.join(BASE_DIR, "docs")
 
 STATIC_PATCH_HEAD = """\
 <script>
