@@ -1,6 +1,0 @@
-services:
-  - type: web
-    name: outlet-map
-    runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python web_server.py
